@@ -1,0 +1,103 @@
+# Dependencies and Setup
+import matplotlib.pyplot as plt
+import pandas as pd
+import scipy.stats as st
+
+# Study data files
+mouse_metadata = "data/Mouse_metadata.csv"
+study_results = "data/Study_results.csv"
+
+# Read the mouse data and the study results
+mouse_metadata = pd.read_csv(mouse_metadata)
+study_results = pd.read_csv(study_results)
+
+study_results.head()
+mouse_metadata.head()
+
+# Combine the data into a single dataset
+
+combined_data = pd.merge(mouse_metadata,study_results,on = "Mouse ID")
+combined_data = combined_data.rename(columns={"Tumor Volume (mm3)": "Tumor Volume"})
+combined_data
+
+# Generate a summary statistics table of mean, median, variance, standard deviation, and SEM of the tumor volume for each regimen
+drug_combined_data = combined_data.groupby(["Drug Regimen"])
+drug_combined_data.count().head(10)
+
+drug_vol_mean = drug_combined_data["Tumor Volume"].mean()
+drug_vol_median = drug_combined_data["Tumor Volume"].median()
+drug_vol_variance = drug_combined_data["Tumor Volume"].var()
+drug_vol_std = drug_combined_data["Tumor Volume"].std()
+drug_vol_sem = drug_combined_data["Tumor Volume"].sem()
+
+drugVol_data_sumtable = pd.DataFrame({"Mean Tumor Vol": drug_vol_mean,
+                                    "Median Tumor Volume": drug_vol_median,
+                                    "Tumor Vol Variance": drug_vol_variance,
+                                    "Tumor Vol Stdev": drug_vol_std,
+                                    "Tumor Volume SEM": drug_vol_sem})
+drugVol_data_sumtable
+
+# Generate a bar plot showing number of data points for each treatment regimen using pandas
+points = combined_data.groupby("Drug Regimen")
+count = points["Drug Regimen"].count()
+count_chart = count.plot(kind='bar',figsize = (9,5))
+plt.ylim(150,250)
+plt.title("Total Data per Drug")
+plt.xlabel("Drug Type")
+plt.ylabel("Number Mice")
+
+plt.show()
+plt.tight_layout()
+
+# Generate a bar plot showing number of data points for each treatment regimen using pyplot
+
+x_axis = ("Capomulin","Ceftamin","Infubino","Ketapril","Naftisol","Placebo","Propriva","Ramicane","Stelasyn","Zoniferol")
+tick_locations = [value for value in x_axis]
+
+plt.figure(figsize=(9,5))
+plt.bar(x_axis,count,color = "blue", alpha = 0.5,align = "center")
+plt.xticks(tick_locations, rotation = "90")
+
+#plt.bar(x_axis,count, alpha = 0.5,align = "center")
+#plt.xticks(tick_locations,count)
+#plt.figure()
+
+plt.xlim(1,len(x_axis))
+plt.ylim(150,250)
+plt.title("Total Data per Drug")
+plt.xlabel("Drug Type")
+plt.ylabel("Number Mice")
+
+# Generate a pie plot showing the distribution of female versus male mice using pandas
+total_sample = len(combined_data)
+#print(total_sample)
+
+genders = combined_data.groupby("Sex").count()
+#males = int(genders.iloc[1,1])
+#females = int(genders.iloc[0,1])
+
+genders.head(10)
+
+# Generate a pie plot showing the distribution of female versus male mice using pyplot
+sex = ("Male", "Female")
+totals = (males,females)
+colors = ("blue", "green")
+explode = (0.1,0)
+plt.pie(totals,explode = explode,labels = sex, colors = colors,autopct="%1.1f%%",startangle = 100,shadow = "True")
+plt.axis("equal")
+
+# Calculate the final tumor volume of each mouse across four of the most promising treatment regimens. 
+#Calculate the IQR and quantitatively determine if there are any potential outliers. 
+most_promising = ["Capomulin", "Ramicane", "Infubinol", "Ceftamin"]
+most_promising_df = combined_data.groupby(["Drug Regimen"])
+drug_combined_data.head(10)
+
+# Generate a box plot of the final tumor volume of each mouse across four regimens of interest
+
+final_tumor_volume = combined_data["Total Volume"]
+fig1, ax1 = plt.subplots()
+ax1.set_title('Final Tumor Volume')
+ax1.set_ylabel('Volume')
+ax1.boxplot(final_tumor_volume)
+plt.show()
+
